@@ -1,0 +1,305 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ * @return array Menu items
+ */
+function spoauthconsumer_menu() {
+	$items = array();
+
+	$items['oauth2/initialize'] = array(
+		'title'           => 'Initialiseer OAuth2-login',
+		'page callback'   => 'spoauthconsumer_initialize',
+		'access callback' => true,
+		'type'            => MENU_CALLBACK,
+	);
+	$items['oauth2/callback'] = array(
+		'title'           => 'Callback voor OAuth2-login',
+		'page callback'   => 'spoauthconsumer_callback',
+		'access callback' => true,
+		'type'            => MENU_CALLBACK,
+	);
+
+	$items['admin/config/sp'] = array(
+		'title'            => 'SP',
+		'description'      => 'SP-specifieke instellingen',
+		'weight'           => -8,
+		'page callback'    => 'spoauthconsumer_admin_block',
+		'access arguments' => array('access administration pages'),
+	);
+
+	$items['admin/config/sp/oauthconsumer'] = array(
+		'title'            => 'OAuth Consumer',
+		'description'      => 'Instellingen voor inloggen met OAuth.',
+		'type'             => MENU_NORMAL_ITEM,
+		'page callback'    => 'drupal_get_form',
+		'page arguments'   => array('spoauthconsumer_admin_settings_form'),
+		'access arguments' => array('access administration pages'),
+	);
+
+	$items['admin/config/sp/oauthconsumer/settings'] = array(
+		'title'            => 'Instellingen',
+		'type'             => MENU_DEFAULT_LOCAL_TASK,
+		'access arguments' => array('access administration pages'),
+		'weight'           => 0,
+	);
+	return $items;
+}
+
+/**
+ * Implements hook_block(). Toon blok met inlogknop.
+ */
+function spoauthconsumer_block_info() {
+	$block['spoauthconsumer_initialize']['info'] = t('SP OAuth Consumer');
+	return $block;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function spoauthconsumer_block_view($delta) {
+
+	if (variable_get('spoauthconsumer_enable') == true) {
+		global $user;
+
+		switch ($delta) {
+			case 'spoauthconsumer_initialize':
+				if (!$user->uid) {
+					$state = array('build_info' => array('args' => array()));
+					return array(
+						'content' => drupal_get_form('spoauthconsumer_button_form'),
+					);
+				}
+				break;
+		}
+	}
+}
+
+/**
+ * Formulier met inlogknop
+ */
+function spoauthconsumer_button_form($form, &$form_state) {
+	$form['spoauthconsumer_connect'] = array(
+		'#type'   => 'submit',
+		'#value'  => 'Inloggen met Mijn SP',
+		'#submit' => array('spoauthconsumer_initialize'),
+	);
+	return $form;
+}
+
+/**
+ * Laad de gebundelde PHP-OAuth2 library in (composer oid is hiervoor een beetje overkill)
+ * en initialiseer de client.
+ */
+function _spoauthconsumer_load_oauth2() {
+
+	require_once __DIR__ . '/OAuth2/Client.php';
+	require_once __DIR__ . '/OAuth2/GrantType/IGrantType.php';
+	require_once __DIR__ . '/OAuth2/GrantType/AuthorizationCode.php';
+
+	return array(
+		'client'                => new OAuth2\Client(variable_get('spoauthconsumer_client_id'), variable_get('spoauthconsumer_client_secret')),
+		'authorisationEndpoint' => variable_get('spoauthconsumer_server') . '/oauth2/authorize',
+		'tokenEndpoint'         => variable_get('spoauthconsumer_server') . '/oauth2/token',
+		'apiEndpoint'           => variable_get('spoauthconsumer_server') . '/oauth2/api',
+		'redirectUri'           => 'https://' . $_SERVER['SERVER_NAME'] . base_path() . 'oauth2/callback',
+	);
+}
+
+/**
+ * Bij een klik op de 'Inloggen met...'-knop gaan we oauthen
+ */
+function spoauthconsumer_initialize() {
+
+	$oauth2 = _spoauthconsumer_load_oauth2();
+
+	if (variable_get('spoauthconsumer_enable') != true) {
+		drupal_set_message('De OAuth-loginfunctionaliteit is uitgeschakeld.');
+		return drupal_goto('<front>');
+	}
+
+	$auth_url = $oauth2['client']->getAuthenticationUrl($oauth2['authorisationEndpoint'], $oauth2['redirectUri'], array(
+		'scope' => 'sp',
+		'state' => 'login',
+	));
+	return drupal_goto($auth_url);
+}
+
+/**
+ * Callback-pagina: de provider verwijst terug naar /oauth2/authorized en dat wordt hier afgehandeld
+ */
+function spoauthconsumer_callback() {
+
+	$oauth2 = _spoauthconsumer_load_oauth2();
+
+	if (!isset($_GET['code'])) {
+		drupal_set_message('Ongeldige aanroep.', 'error');
+		drupal_goto('user');
+		return true;
+	}
+
+	$response = $oauth2['client']->getAccessToken($oauth2['tokenEndpoint'], 'authorization_code', array(
+		'code'         => $_GET['code'],
+		'redirect_uri' => $oauth2['redirectUri'],
+	));
+	if ($response && isset($response['result']['access_token'])) {
+		$oauth2['client']->setAccessToken($response['result']['access_token']);
+
+		$info = $oauth2['client']->fetch($oauth2['apiEndpoint'] . '/me');
+		if ($info && isset($info['result'])) {
+			try {
+				$userData = new SimpleXMLElement($info['result']);
+				if ($userData)
+					return spoauthconsumer_process_user($userData);
+
+			} catch (\Exception $e) {
+				drupal_set_message('Er is een fout opgetreden bij het verwerken van de XML-response van de provider. Probeer het later opnieuw.', 'error');
+				drupal_goto('user');
+				return true;
+			}
+		}
+		exit;
+	} else {
+		drupal_set_message('Er is een fout opgetreden bij het verwerken van uw verzoek. Probeer het later opnieuw.', 'error');
+	}
+}
+
+/**
+ * We hebben een succesvolle login en user data. Verwerk deze gebruiker (inloggen, account aanmaken, etc)
+ * @param $data User object van /me als SimpleXML-object
+ * @return bool|void
+ */
+function spoauthconsumer_process_user($data) {
+
+	// echo '<pre> ' .print_r($data, true) . '</pre>';
+
+	// Role check
+	$allowed_roles = _spoauthconsumer_get_allowed_roles();
+	if ($allowed_roles && count($allowed_roles) > 0) {
+		$hasAccess = false;
+
+		if ($data->roles && $data->roles->item) {
+			foreach ($data->roles->item as $role) {
+				if (($role->id && in_array($role->id, $allowed_roles)) ||
+					($role->name && in_array($role->name, $allowed_roles))
+				)
+					$hasAccess = true;
+			}
+		}
+
+		if (!$hasAccess) {
+			drupal_set_message('U hebt geen toegang tot deze website. Neem voor vragen contact op met webmaster@sp.nl.', 'error');
+			return drupal_goto('<front>');
+		}
+	}
+
+	// Login or create account
+	$authname = 'spoauth_' . $data->name;
+
+	$account = user_external_load($authname);
+	if (!$account) {
+
+		// Create user
+		$userinfo = array(
+			'name'   => $data->name,
+			'pass'   => user_password(),
+			'mail'   => $data->mail,
+			'init'   => $authname,
+			'status' => 1,
+			'access' => REQUEST_TIME,
+		);
+		$account = user_save('', $userinfo);
+
+		// Create authmap record
+		$result = (bool)db_insert('authmap')
+			->fields(array(
+				'uid'      => $account->uid,
+				'authname' => $authname,
+				'module'   => 'spoauthconsumer',
+			))
+			->execute();
+		if (!$result) {
+			user_delete($account->uid); // Authmap mislukt -> rollback
+		}
+
+		if (!$account) {
+			drupal_set_message('Het is niet gelukt een account voor u aan te maken op deze website.', 'error');
+			return drupal_goto('<front>');
+		} else {
+
+			watchdog('user', 'New external user: %name using SP OAuth Consumer.', array('%name' => $authname), WATCHDOG_NOTICE, l(t('edit'), 'user/' . $account->uid . '/edit'));
+			drupal_set_message('U bent nu ingelogd via Mijn SP op deze website.');
+		}
+	}
+
+	// Log in user
+	$form_state['uid'] = $account->uid;
+	user_login_submit(array(), $form_state);
+	return drupal_goto('<front>');
+}
+
+function _spoauthconsumer_get_allowed_roles() {
+	$allowed_roles = variable_get('spoauthconsumer_allowed_roles');
+	if (!$allowed_roles)
+		return array();
+
+	$allowed_roles = explode("\n", $allowed_roles);
+	foreach ($allowed_roles as $key => $value) {
+		if (!trim($value))
+			unset($allowed_roles[$key]);
+	}
+	return $allowed_roles;
+}
+
+/**
+ * Admin settings form
+ * @return array Form elements
+ */
+function spoauthconsumer_admin_settings_form() {
+
+	$form = array();
+
+	$form['spoauthconsumer_description'] = array(
+		'#markup' => '<h3>Instellingen</h3><p>Instellingen om deze Drupal-site te laten werken als OAuth2 Consumer.</p>',
+	);
+	$form['spoauthconsumer_enable'] = array(
+		'#type'          => 'checkbox',
+		'#title'         => 'OAuth-login inschakelen',
+		'#default_value' => variable_get('spoauthconsumer_enable', true),
+		'#description'   => 'Schakelt de OAuth-loginfunctie in of uit.',
+		'#required'      => false,
+	);
+
+	$form['spoauthconsumer_server'] = array(
+		'#type'          => 'textfield',
+		'#title'         => 'Server',
+		'#default_value' => variable_get('spoauthconsumer_server', 'https://spnettest.sp.nl'),
+		'#description'   => 'URL van de provider-installatie, zonder pad.',
+		'#required'      => true,
+	);
+
+	$form['spoauthconsumer_client_id'] = array(
+		'#type'          => 'textfield',
+		'#title'         => 'Client-ID',
+		'#default_value' => variable_get('spoauthconsumer_client_id'),
+		'#description'   => 'De ID en secret zoals je deze op de provider-installatie hebt ingevuld.',
+		'#required'      => true,
+	);
+
+	$form['spoauthconsumer_client_secret'] = array(
+		'#type'          => 'textfield',
+		'#title'         => 'Client-secret',
+		'#default_value' => variable_get('spoauthconsumer_client_secret'),
+		'#required'      => true,
+	);
+
+	$form['spoauthconsumer_allowed_roles'] = array(
+		'#type'          => 'textarea',
+		'#title'         => 'Toegestane rollen',
+		'#default_value' => variable_get('spoauthconsumer_allowed_roles', ''),
+		'#description'   => 'Vul de id\'s of namen in van rollen die zich op deze site mogen aanmelden (&eacute;&eacute;n per regel), bijvoorbeeld \'Lid SP\' of \'Voorzitter\'. Laat het veld leeg om iedereen met een account toe te staan zich aan te melden.',
+		'#required'      => false,
+	);
+
+	return system_settings_form($form);
+}

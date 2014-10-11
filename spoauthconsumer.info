@@ -1,0 +1,6 @@
+name = SP OAuth Consumer
+description = Experimental module that enables a Drupal website to function as an OAuth2 Consumer
+core = 7.x
+version = 1.0
+package = sprbs
+
