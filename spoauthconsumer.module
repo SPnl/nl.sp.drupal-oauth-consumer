@@ -149,8 +149,10 @@ function spoauthconsumer_callback() {
 		if ($info && isset($info['result'])) {
 			try {
 				$userData = new SimpleXMLElement($info['result']);
-				if ($userData)
+				if ($userData) {
+
 					return spoauthconsumer_process_user($userData);
+				}
 
 			} catch (\Exception $e) {
 				drupal_set_message('Er is een fout opgetreden bij het verwerken van de XML-response van de provider. Probeer het later opnieuw.', 'error');
@@ -160,7 +162,7 @@ function spoauthconsumer_callback() {
 		}
 		exit;
 	} else {
-		drupal_set_message('Er is een fout opgetreden bij het verwerken van uw verzoek. Probeer het later opnieuw.', 'error');
+		drupal_set_message('Er is een fout opgetreden bij het verwerken van uw verzoek (' . $response['code'] . '). Probeer het later opnieuw.', 'error');
 	}
 }
 
@@ -193,49 +195,65 @@ function spoauthconsumer_process_user($data) {
 		}
 	}
 
-	// Login or create account
-	$authname = 'spoauth_' . $data->name;
+	try {
 
-	$account = user_external_load($authname);
-	if (!$account) {
+		// Login or create account
+		$authname = 'spoauth_' . $data->name;
 
-		// Create user
-		$userinfo = array(
-			'name'   => $data->name,
-			'pass'   => user_password(),
-			'mail'   => $data->mail,
-			'init'   => $authname,
-			'status' => 1,
-			'access' => REQUEST_TIME,
-		);
-		$account = user_save('', $userinfo);
-
-		// Create authmap record
-		$result = (bool)db_insert('authmap')
-			->fields(array(
-				'uid'      => $account->uid,
-				'authname' => $authname,
-				'module'   => 'spoauthconsumer',
-			))
-			->execute();
-		if (!$result) {
-			user_delete($account->uid); // Authmap mislukt -> rollback
-		}
-
+		$account = user_external_load($authname);
 		if (!$account) {
-			drupal_set_message('Het is niet gelukt een account voor u aan te maken op deze website.', 'error');
-			return drupal_goto('<front>');
-		} else {
 
-			watchdog('user', 'New external user: %name using SP OAuth Consumer.', array('%name' => $authname), WATCHDOG_NOTICE, l(t('edit'), 'user/' . $account->uid . '/edit'));
-			drupal_set_message('U bent nu ingelogd via Mijn SP op deze website.');
+			// Check if username is available
+			for($i=0;$i<=100;$i++) {
+				$username = $data->name . ($i>0 ? '-' . $i : '');
+				$test = user_load_by_name($username);
+				if($test === false)
+					break;
+			}
+
+			// Create user
+			$userinfo = array(
+				'name'   => $username,
+				'pass'   => user_password(),
+				'mail'   => $data->mail,
+				'init'   => $authname,
+				'status' => 1,
+				'access' => REQUEST_TIME,
+			);
+			$account = user_save('', $userinfo);
+
+			// Create authmap record
+			$result = (bool)db_insert('authmap')
+				->fields(array(
+					'uid'      => $account->uid,
+					'authname' => $authname,
+					'module'   => 'spoauthconsumer',
+				))
+				->execute();
+			if (!$result) {
+				user_delete($account->uid); // Authmap mislukt -> rollback
+			}
+
+			if (!$account) {
+				drupal_set_message('Het is niet gelukt een account voor u aan te maken op deze website.', 'error');
+				return drupal_goto('<front>');
+			} else {
+
+				watchdog('user', 'New external user: %name using SP OAuth Consumer.', array('%name' => $authname), WATCHDOG_NOTICE, l(t('edit'), 'user/' . $account->uid . '/edit'));
+				drupal_set_message('U bent nu ingelogd via Mijn SP op deze website.');
+			}
 		}
-	}
 
-	// Log in user
-	$form_state['uid'] = $account->uid;
-	user_login_submit(array(), $form_state);
-	return drupal_goto('<front>');
+		// Log in user
+		$form_state['uid'] = $account->uid;
+		user_login_submit(array(), $form_state);
+		return drupal_goto('<front>');
+
+	} catch(\Exception $e) {
+		drupal_set_message('Er is een fout opgetreden bij het aanmaken of bijwerken van uw gebruikersaccount. Probeer het later opnieuw.', 'error');
+		drupal_goto('user');
+		return true;
+	}
 }
 
 function _spoauthconsumer_get_allowed_roles() {
