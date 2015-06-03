@@ -75,6 +75,12 @@ function spoauthconsumer_block_view($delta) {
 						'content' => drupal_get_form('spoauthconsumer_button_form'),
 					);
 				}
+                                else {  
+                                        //$state = array('build_info' => array('args' => array()));
+                                        return array(
+                                          'content' => '<form action="/user/logout" method="get"><input class="form-submit" type="submit" value="Uitloggen" name="Submit" id="edit-spoauthconsumer-logout" /></form>',
+                                        );
+                                }
 				break;
 		}
 	}
