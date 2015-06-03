@@ -5,58 +5,58 @@
  * @return array Menu items
  */
 function spoauthconsumer_menu() {
-	$items = array();
+  $items = array();
 
-	$items['oauth2/initialize'] = array(
-		'title'           => 'Initialiseer OAuth2-login',
-		'page callback'   => 'spoauthconsumer_initialize',
-		'access callback' => true,
-		'type'            => MENU_CALLBACK,
-	);
-	$items['oauth2/callback'] = array(
-		'title'           => 'Callback voor OAuth2-login',
-		'page callback'   => 'spoauthconsumer_callback',
-		'access callback' => true,
-		'type'            => MENU_CALLBACK,
-	);
+  $items['oauth2/initialize'] = array(
+    'title'           => 'Initialiseer OAuth2-login',
+    'page callback'   => 'spoauthconsumer_initialize',
+    'access callback' => true,
+    'type'            => MENU_CALLBACK,
+  );
+  $items['oauth2/callback'] = array(
+    'title'           => 'Callback voor OAuth2-login',
+    'page callback'   => 'spoauthconsumer_callback',
+    'access callback' => true,
+    'type'            => MENU_CALLBACK,
+  );
 
-	$items['admin/config/sp'] = array(
-		'title'            => 'SP',
-		'description'      => 'SP-specifieke instellingen',
-		'weight'           => -8,
-		'page callback'    => 'spoauthconsumer_admin_block',
-		'access arguments' => array('access administration pages'),
-		'file'             => 'spaanmelden.page-admin.inc',
-	);
+  $items['admin/config/sp'] = array(
+    'title'            => 'SP',
+    'description'      => 'SP-specifieke instellingen',
+    'weight'           => -8,
+    'page callback'    => 'spoauthconsumer_admin_block',
+    'access arguments' => array('access administration pages'),
+    'file'             => 'spaanmelden.page-admin.inc',
+  );
 
-	$items['admin/config/sp/oauthconsumer'] = array(
-		'title'            => 'OAuth Consumer',
-		'description'      => 'Instellingen voor inloggen met OAuth.',
-		'type'             => MENU_NORMAL_ITEM,
-		'page callback'    => 'drupal_get_form',
-		'page arguments'   => array('spoauthconsumer_admin_settings_form'),
-		'access arguments' => array('access administration pages'),
-		'file'             => 'spoauthconsumer.page-admin.inc',
-	);
+  $items['admin/config/sp/oauthconsumer'] = array(
+    'title'            => 'OAuth Consumer',
+    'description'      => 'Instellingen voor inloggen met OAuth.',
+    'type'             => MENU_NORMAL_ITEM,
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('spoauthconsumer_admin_settings_form'),
+    'access arguments' => array('access administration pages'),
+    'file'             => 'spoauthconsumer.page-admin.inc',
+  );
 
-	$items['admin/config/sp/oauthconsumer/settings'] = array(
-		'title'            => 'Instellingen',
-		'type'             => MENU_DEFAULT_LOCAL_TASK,
-		'access arguments' => array('access administration pages'),
-		'weight'           => 0,
-	);
-	return $items;
+  $items['admin/config/sp/oauthconsumer/settings'] = array(
+    'title'            => 'Instellingen',
+    'type'             => MENU_DEFAULT_LOCAL_TASK,
+    'access arguments' => array('access administration pages'),
+    'weight'           => 0,
+  );
+  return $items;
 }
 
 /**
  * Implements hook_block(). Toon blok met inlogknop.
  */
 function spoauthconsumer_block_info() {
-	
-	spoauthconsumer_enable();
-	
-	$block['spoauthconsumer_initialize']['info'] = t('SP OAuth Consumer');
-	return $block;
+
+  spoauthconsumer_enable();
+
+  $block['spoauthconsumer_initialize']['info'] = t('SP OAuth Consumer');
+  return $block;
 }
 
 /**
@@ -64,26 +64,26 @@ function spoauthconsumer_block_info() {
  */
 function spoauthconsumer_block_view($delta) {
 
-	if (variable_get('spoauthconsumer_enable') == true) {
-		global $user;
+  if (variable_get('spoauthconsumer_enable') == true) {
+    global $user;
 
-		switch ($delta) {
-			case 'spoauthconsumer_initialize':
-				if (!$user->uid) {
-					$state = array('build_info' => array('args' => array()));
-					return array(
-						'content' => drupal_get_form('spoauthconsumer_button_form'),
-					);
-				}
-                                else {  
-                                        //$state = array('build_info' => array('args' => array()));
-                                        return array(
-                                          'content' => '<form action="/user/logout" method="get"><input class="form-submit" type="submit" value="Uitloggen" name="Submit" id="edit-spoauthconsumer-logout" /></form>',
-                                        );
-                                }
-				break;
-		}
-	}
+    switch ($delta) {
+    case 'spoauthconsumer_initialize':
+      if (!$user->uid) {
+        $state = array('build_info' => array('args' => array()));
+        return array(
+          'content' => drupal_get_form('spoauthconsumer_button_form'),
+        );
+      }
+      else {  
+        //$state = array('build_info' => array('args' => array()));
+        return array(
+          'content' => '<form action="/user/logout" method="get"><input class="form-submit" type="submit" value="Uitloggen" name="Submit" id="edit-spoauthconsumer-logout" /></form>',
+        );
+      }
+      break;
+    }
+  }
 }
 
 /**
@@ -91,12 +91,12 @@ function spoauthconsumer_block_view($delta) {
  */
 function spoauthconsumer_button_form($form, &$form_state) {
 
-	$form['spoauthconsumer_connect'] = array(
-		'#type'   => 'submit',
-		'#value'  => 'Inloggen met Mijn SP',
-		'#submit' => array('spoauthconsumer_initialize'),
-	);
-	return $form;
+  $form['spoauthconsumer_connect'] = array(
+    '#type'   => 'submit',
+    '#value'  => 'Inloggen met Mijn SP',
+    '#submit' => array('spoauthconsumer_initialize'),
+  );
+  return $form;
 }
 
 /**
@@ -105,14 +105,14 @@ function spoauthconsumer_button_form($form, &$form_state) {
  */
 function spoauthconsumer_enable() {
 
-	_spoauthconsumer_create_field('field_contact_id', 'Registratienummer', 'number_integer');
-	_spoauthconsumer_create_field('field_first_name', 'Voornaam');
-	_spoauthconsumer_create_field('field_middle_name', 'Tussenvoegsel');
-	_spoauthconsumer_create_field('field_last_name', 'Achternaam');
-	_spoauthconsumer_create_field('field_initials', 'Voorletters');
-	_spoauthconsumer_create_field('field_phone_primary', 'Telefoon');
-	_spoauthconsumer_create_field('field_email_primary', 'E-mailadres');
-	_spoauthconsumer_create_field('field_afdeling', 'Afdeling');
+  _spoauthconsumer_create_field('field_contact_id', 'Registratienummer', 'number_integer');
+  _spoauthconsumer_create_field('field_first_name', 'Voornaam');
+  _spoauthconsumer_create_field('field_middle_name', 'Tussenvoegsel');
+  _spoauthconsumer_create_field('field_last_name', 'Achternaam');
+  _spoauthconsumer_create_field('field_initials', 'Voorletters');
+  _spoauthconsumer_create_field('field_phone_primary', 'Telefoon');
+  _spoauthconsumer_create_field('field_email_primary', 'E-mailadres');
+  _spoauthconsumer_create_field('field_afdeling', 'Afdeling');
 }
 
 /**
@@ -122,22 +122,22 @@ function spoauthconsumer_enable() {
  */
 function _spoauthconsumer_create_field($name, $label, $type = 'text') {
 
-	if(!field_info_field($name)) {
-		field_create_field(array(
-			'field_name' => $name,
-			'type' => $type,
-		));
+  if(!field_info_field($name)) {
+    field_create_field(array(
+      'field_name' => $name,
+      'type' => $type,
+    ));
 
-		field_create_instance(array(
-			'field_name' => $name,
-			'entity_type' => 'user',
-			'label' => $label,
-			'bundle' => 'user',
-			'settings' => array(
-				'user_register_form' => false,
-			),
-		));
-	}
+    field_create_instance(array(
+      'field_name' => $name,
+      'entity_type' => 'user',
+      'label' => $label,
+      'bundle' => 'user',
+      'settings' => array(
+        'user_register_form' => false,
+      ),
+    ));
+  }
 }
 
 /**
@@ -146,17 +146,17 @@ function _spoauthconsumer_create_field($name, $label, $type = 'text') {
  */
 function _spoauthconsumer_load_oauth2() {
 
-	require_once __DIR__ . '/OAuth2/Client.php';
-	require_once __DIR__ . '/OAuth2/GrantType/IGrantType.php';
-	require_once __DIR__ . '/OAuth2/GrantType/AuthorizationCode.php';
+  require_once __DIR__ . '/OAuth2/Client.php';
+  require_once __DIR__ . '/OAuth2/GrantType/IGrantType.php';
+  require_once __DIR__ . '/OAuth2/GrantType/AuthorizationCode.php';
 
-	return array(
-		'client'                => new OAuth2\Client(variable_get('spoauthconsumer_client_id'), variable_get('spoauthconsumer_client_secret')),
-		'authorisationEndpoint' => variable_get('spoauthconsumer_server') . '/oauth2/authorize',
-		'tokenEndpoint'         => variable_get('spoauthconsumer_server') . '/oauth2/token',
-		'apiEndpoint'           => variable_get('spoauthconsumer_server') . '/oauth2/api',
-		'redirectUri'           => 'https://' . $_SERVER['SERVER_NAME'] . base_path() . 'oauth2/callback',
-	);
+  return array(
+    'client'                => new OAuth2\Client(variable_get('spoauthconsumer_client_id'), variable_get('spoauthconsumer_client_secret')),
+    'authorisationEndpoint' => variable_get('spoauthconsumer_server') . '/oauth2/authorize',
+    'tokenEndpoint'         => variable_get('spoauthconsumer_server') . '/oauth2/token',
+    'apiEndpoint'           => variable_get('spoauthconsumer_server') . '/oauth2/api',
+    'redirectUri'           => 'https://' . $_SERVER['SERVER_NAME'] . base_path() . 'oauth2/callback',
+  );
 }
 
 /**
@@ -164,18 +164,18 @@ function _spoauthconsumer_load_oauth2() {
  */
 function spoauthconsumer_initialize() {
 
-	$oauth2 = _spoauthconsumer_load_oauth2();
+  $oauth2 = _spoauthconsumer_load_oauth2();
 
-	if (variable_get('spoauthconsumer_enable') != true) {
-		drupal_set_message('De OAuth-loginfunctionaliteit is uitgeschakeld.');
-		return drupal_goto('<front>');
-	}
+  if (variable_get('spoauthconsumer_enable') != true) {
+    drupal_set_message('De OAuth-loginfunctionaliteit is uitgeschakeld.');
+    return drupal_goto('<front>');
+  }
 
-	$auth_url = $oauth2['client']->getAuthenticationUrl($oauth2['authorisationEndpoint'], $oauth2['redirectUri'], array(
-		'scope' => 'sp',
-		'state' => 'login',
-	));
-	return drupal_goto($auth_url);
+  $auth_url = $oauth2['client']->getAuthenticationUrl($oauth2['authorisationEndpoint'], $oauth2['redirectUri'], array(
+    'scope' => 'sp',
+    'state' => 'login',
+  ));
+  return drupal_goto($auth_url);
 }
 
 /**
@@ -183,40 +183,40 @@ function spoauthconsumer_initialize() {
  */
 function spoauthconsumer_callback() {
 
-	$oauth2 = _spoauthconsumer_load_oauth2();
+  $oauth2 = _spoauthconsumer_load_oauth2();
 
-	if (!isset($_GET['code'])) {
-		drupal_set_message('Ongeldige aanroep.', 'error');
-		drupal_goto('user');
-		return true;
-	}
+  if (!isset($_GET['code'])) {
+    drupal_set_message('Ongeldige aanroep.', 'error');
+    drupal_goto('user');
+    return true;
+  }
 
-	$response = $oauth2['client']->getAccessToken($oauth2['tokenEndpoint'], 'authorization_code', array(
-		'code'         => $_GET['code'],
-		'redirect_uri' => $oauth2['redirectUri'],
-	));
-	if ($response && isset($response['result']['access_token'])) {
-		$oauth2['client']->setAccessToken($response['result']['access_token']);
+  $response = $oauth2['client']->getAccessToken($oauth2['tokenEndpoint'], 'authorization_code', array(
+    'code'         => $_GET['code'],
+    'redirect_uri' => $oauth2['redirectUri'],
+  ));
+  if ($response && isset($response['result']['access_token'])) {
+    $oauth2['client']->setAccessToken($response['result']['access_token']);
 
-		$info = $oauth2['client']->fetch($oauth2['apiEndpoint'] . '/me');
-		if ($info && isset($info['result'])) {
-			try {
-				$userData = new SimpleXMLElement($info['result']);
-				if ($userData) {
+    $info = $oauth2['client']->fetch($oauth2['apiEndpoint'] . '/me');
+    if ($info && isset($info['result'])) {
+      try {
+        $userData = new SimpleXMLElement($info['result']);
+        if ($userData) {
 
-					return spoauthconsumer_process_user($userData);
-				}
+          return spoauthconsumer_process_user($userData);
+        }
 
-			} catch (\Exception $e) {
-				drupal_set_message('Er is een fout opgetreden bij het verwerken van de XML-response van de provider. Probeer het later opnieuw.', 'error');
-				drupal_goto('user');
-				return true;
-			}
-		}
-		exit;
-	} else {
-		drupal_set_message('Er is een fout opgetreden bij het verwerken van uw verzoek (' . $response['code'] . '). Probeer het later opnieuw.', 'error');
-	}
+      } catch (\Exception $e) {
+        drupal_set_message('Er is een fout opgetreden bij het verwerken van de XML-response van de provider. Probeer het later opnieuw.', 'error');
+        drupal_goto('user');
+        return true;
+      }
+    }
+    exit;
+  } else {
+    drupal_set_message('Er is een fout opgetreden bij het verwerken van uw verzoek (' . $response['code'] . '). Probeer het later opnieuw.', 'error');
+  }
 }
 
 /**
@@ -226,118 +226,118 @@ function spoauthconsumer_callback() {
  */
 function spoauthconsumer_process_user($data) {
 
-	// echo '<pre> ' .print_r($data, true) . '</pre>';
+  // echo '<pre> ' .print_r($data, true) . '</pre>';
 
-	// Parse remote roles
-	$remote_roles = array();
-	if ($data->roles && $data->roles->item) {
-		foreach ($data->roles->item as $role) {
-			$remote_roles[(string)$role->id] = (string)$role->name;
-		}
-	}
+  // Parse remote roles
+  $remote_roles = array();
+  if ($data->roles && $data->roles->item) {
+    foreach ($data->roles->item as $role) {
+      $remote_roles[(string)$role->id] = (string)$role->name;
+    }
+  }
 
-	// Check if user has access
-	$hasAccess = false;
-	$roles_storage = variable_get('spoauthconsumer_roles_storage');
-	foreach($roles_storage as $role) {
-		if($role['allow_login'] && array_key_exists($role['id'], $remote_roles)) {
-			$hasAccess = true;
-		}
-	}
+  // Check if user has access
+  $hasAccess = false;
+  $roles_storage = variable_get('spoauthconsumer_roles_storage');
+  foreach($roles_storage as $role) {
+    if($role['allow_login'] && array_key_exists($role['id'], $remote_roles)) {
+      $hasAccess = true;
+    }
+  }
 
-	if (!$hasAccess) {
-		drupal_set_message('U hebt geen toegang tot deze website. Neem voor vragen contact op met webmaster@sp.nl.', 'error');
-		return drupal_goto('<front>');
-	}
+  if (!$hasAccess) {
+    drupal_set_message('U hebt geen toegang tot deze website. Neem voor vragen contact op met webmaster@sp.nl.', 'error');
+    return drupal_goto('<front>');
+  }
 
-	try {
+  try {
 
-		// Login or create account
-		$authname = 'spoauth_' . $data->name;
+    // Login or create account
+    $authname = 'spoauth_' . $data->name;
 
-		$account = user_external_load($authname);
-		if (!$account) {
+    $account = user_external_load($authname);
+    if (!$account) {
 
-			// Check if username is available
-			for($i=0;$i<=100;$i++) {
-				$username = $data->name . ($i>0 ? '-' . $i : '');
-				$test = user_load_by_name($username);
-				if($test === false)
-					break;
-			}
+      // Check if username is available
+      for($i=0;$i<=100;$i++) {
+        $username = $data->name . ($i>0 ? '-' . $i : '');
+        $test = user_load_by_name($username);
+        if($test === false)
+          break;
+      }
 
-			// Create user
-			$userinfo = array(
-				'name'   => $username,
-				'pass'   => user_password(),
-				'mail'   => $data->mail,
-				'init'   => $authname,
-				'status' => 1,
-				'access' => REQUEST_TIME,
-			);
+      // Create user
+      $userinfo = array(
+        'name'   => $username,
+        'pass'   => user_password(),
+        'mail'   => $data->mail,
+        'init'   => $authname,
+        'status' => 1,
+        'access' => REQUEST_TIME,
+      );
 
-			$account = user_save('', $userinfo);
+      $account = user_save('', $userinfo);
 
-			// Create authmap record
-			$result = (bool)db_insert('authmap')
-				->fields(array(
-					'uid'      => $account->uid,
-					'authname' => $authname,
-					'module'   => 'spoauthconsumer',
-				))
-				->execute();
-			if (!$result) {
-				user_delete($account->uid); // Authmap mislukt -> rollback
-			}
+      // Create authmap record
+      $result = (bool)db_insert('authmap')
+        ->fields(array(
+          'uid'      => $account->uid,
+          'authname' => $authname,
+          'module'   => 'spoauthconsumer',
+        ))
+        ->execute();
+      if (!$result) {
+        user_delete($account->uid); // Authmap mislukt -> rollback
+      }
 
-			if (!$account) {
-				drupal_set_message('Het is niet gelukt een account voor u aan te maken op deze website.', 'error');
-				return drupal_goto('<front>');
-			} else {
-				watchdog('user', 'New external user: %name using SP OAuth Consumer.', array('%name' => $authname), WATCHDOG_NOTICE, l(t('edit'), 'user/' . $account->uid . '/edit'));
-				drupal_set_message('U bent nu ingelogd via Mijn SP op deze website.');
-			}
-		}
+      if (!$account) {
+        drupal_set_message('Het is niet gelukt een account voor u aan te maken op deze website.', 'error');
+        return drupal_goto('<front>');
+      } else {
+        watchdog('user', 'New external user: %name using SP OAuth Consumer.', array('%name' => $authname), WATCHDOG_NOTICE, l(t('edit'), 'user/' . $account->uid . '/edit'));
+        drupal_set_message('U bent nu ingelogd via Mijn SP op deze website.');
+      }
+    }
 
-		// Update address info
-		$wrapped = entity_metadata_wrapper('user', $account);
+    // Update address info
+    $wrapped = entity_metadata_wrapper('user', $account);
 
-		if(property_exists($data, 'field_email_primary'))
-			$wrapped->mail = (string)$data->field_email_primary;
+    if(property_exists($data, 'field_email_primary'))
+      $wrapped->mail = (string)$data->field_email_primary;
 
-		$addressFields = array('field_contact_id', 'field_first_name', 'field_middle_name', 'field_last_name', 'field_initials', 'field_phone_primary', 'field_email_primary', 'field_afdeling');
-		foreach($addressFields as $addressField) {
-			if(property_exists($data, $addressField))
-				$wrapped->$addressField = (string)$data->$addressField;
-		}
+    $addressFields = array('field_contact_id', 'field_first_name', 'field_middle_name', 'field_last_name', 'field_initials', 'field_phone_primary', 'field_email_primary', 'field_afdeling');
+    foreach($addressFields as $addressField) {
+      if(property_exists($data, $addressField))
+        $wrapped->$addressField = (string)$data->$addressField;
+    }
 
-		// Update roles
-		foreach($roles_storage as $srole) {
+    // Update roles
+    foreach($roles_storage as $srole) {
 
-			if($srole['sync'] == true && isset($srole['local_id'])) {
-				if(isset($remote_roles[$srole['id']])) {
-					if(!array_key_exists($srole['local_id'], $account->roles)) {
-						$new_role[$srole['local_id']] = $srole['name'];
-						$account->roles = $account->roles + $new_role;
-					}
-				} else {
-					if(array_key_exists($srole['local_id'], $account->roles)) {
-						unset($account->roles[ $srole['local_id'] ]);
-					}
-				}
-			}
-		}
+      if($srole['sync'] == true && isset($srole['local_id'])) {
+        if(isset($remote_roles[$srole['id']])) {
+          if(!array_key_exists($srole['local_id'], $account->roles)) {
+            $new_role[$srole['local_id']] = $srole['name'];
+            $account->roles = $account->roles + $new_role;
+          }
+        } else {
+          if(array_key_exists($srole['local_id'], $account->roles)) {
+            unset($account->roles[ $srole['local_id'] ]);
+          }
+        }
+      }
+    }
 
-		user_save($account);
+    user_save($account);
 
-		// Log in user
-		$form_state['uid'] = $account->uid;
-		user_login_submit(array(), $form_state);
-		return drupal_goto('<front>');
+    // Log in user
+    $form_state['uid'] = $account->uid;
+    user_login_submit(array(), $form_state);
+    return drupal_goto('<front>');
 
-	} catch(\Exception $e) {
-		drupal_set_message('Er is een fout opgetreden bij het aanmaken of bijwerken van uw gebruikersaccount. Probeer het later opnieuw.', 'error');
-		drupal_goto('user');
-		return true;
-	}
+  } catch(\Exception $e) {
+    drupal_set_message('Er is een fout opgetreden bij het aanmaken of bijwerken van uw gebruikersaccount. Probeer het later opnieuw.', 'error');
+    drupal_goto('user');
+    return true;
+  }
 }
