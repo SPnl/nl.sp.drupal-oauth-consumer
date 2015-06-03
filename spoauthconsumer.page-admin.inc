@@ -87,6 +87,24 @@ function spoauthconsumer_admin_settings_form($form, &$form_state) {
     '#description' => 'Vink de rollen op de provider-site aan die gesynchroniseerd moeten worden met gelijknamige rollen op deze website.',
   );
 
+  $form['spoauthconsumer_button_text'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Tekst inlog knop',
+    '#description' => 'Pas de tekst op de inlogknop naar wens aan.',
+    '#default_value' => variable_get('spoauthconsumer_button_text', 'Inloggen met SPNET'),
+    '#size' => 60,
+    '#max_length' => 60,
+  );
+
+  $form['spoauthconsumer_redirect_path'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Redirect pad',
+    '#description' => t('Vul het pad in waar de gebruiker na het inloggen heen gestuurd moet worden. Vul %front in voor de voorpagina.', array('%front' => '<front>')),
+    '#default_value' => variable_get('spoauthconsumer_redirect_path', ''),
+    '#size' => 60,
+    '#max_length' => 60,
+  );
+
   $form['actions'] = array(
     '#type' => 'actions',
   );
@@ -97,6 +115,15 @@ function spoauthconsumer_admin_settings_form($form, &$form_state) {
   );
 
   return $form;
+}
+
+function spoauthconsumer_admin_settings_form_validate($form, &$form_state) {
+  $redirect_path = $form_state['values']['spoauthconsumer_redirect_path'];
+  if (!empty($redirect_path)) {
+    if (!drupal_valid_path($redirect_path)) {
+      form_set_error('spoauthconsumer_redirect_path', 'Vul een geldig pad in');
+    }
+  }
 }
 
 /**
@@ -114,6 +141,8 @@ function spoauthconsumer_admin_settings_form_submit($form, &$form_state) {
   variable_set('spoauthconsumer_server', $form_state['values']['spoauthconsumer_server']);
   variable_set('spoauthconsumer_client_id', $form_state['values']['spoauthconsumer_client_id']);
   variable_set('spoauthconsumer_client_secret', $form_state['values']['spoauthconsumer_client_secret']);
+  variable_set('spoauthconsumer_button_text', $form_state['values']['spoauthconsumer_button_text']);
+  variable_set('spoauthconsumer_redirect_path', $form_state['values']['spoauthconsumer_redirect_path']);
 
   // Update role storage
   $roleStorage = variable_get('spoauthconsumer_roles_storage', array());
