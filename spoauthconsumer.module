@@ -20,30 +20,21 @@ function spoauthconsumer_menu() {
     'type'            => MENU_CALLBACK,
   );
 
-  $items['admin/config/sp'] = array(
-    'title'            => 'SP',
-    'description'      => 'SP-specifieke instellingen',
-    'weight'           => -8,
-    'page callback'    => 'spoauthconsumer_admin_block',
-    'access arguments' => array('access administration pages'),
-    'file'             => 'spaanmelden.page-admin.inc',
-  );
-
   $items['admin/config/sp/oauthconsumer'] = array(
     'title'            => 'OAuth Consumer',
     'description'      => 'Instellingen voor inloggen met OAuth.',
     'type'             => MENU_NORMAL_ITEM,
     'page callback'    => 'drupal_get_form',
     'page arguments'   => array('spoauthconsumer_admin_settings_form'),
-    'access arguments' => array('access administration pages'),
     'file'             => 'spoauthconsumer.page-admin.inc',
+    'access callback' => sprbs_access_check(),
   );
 
   $items['admin/config/sp/oauthconsumer/settings'] = array(
     'title'            => 'Instellingen',
     'type'             => MENU_DEFAULT_LOCAL_TASK,
-    'access arguments' => array('access administration pages'),
     'weight'           => 0,
+    'access callback' => sprbs_access_check(),
   );
   return $items;
 }
@@ -334,17 +325,32 @@ function spoauthconsumer_process_user($data) {
     // Log in user
     $form_state['uid'] = $account->uid;
     user_login_submit(array(), $form_state);
-    $redirect_path = variable_get('spoauthconsumer_redirect_path', '<front>');
-    if (drupal_valid_path($redirect_path)) {
-      return drupal_goto($redirect_path);
-    }
-    else {
-      return drupal_goto('<front>');
-    }
+    $redirect_path = spoauthconsumer_get_redirect_path();
+    drupal_goto($redirect_path);
 
   } catch(\Exception $e) {
     drupal_set_message('Er is een fout opgetreden bij het aanmaken of bijwerken van uw gebruikersaccount. Probeer het later opnieuw.', 'error');
     drupal_goto('user');
     return true;
   }
+}
+
+function spoauthconsumer_get_redirect_path() {
+  $redirect_path_hooks = spoauthconsumer_get_redirect_path_from_hooks();
+  if (empty($redirect_path_hooks)) {
+    $redirect_path = variable_get('spoauthconsumer_redirect_path', '<front>');
+  }
+  else {
+    $redirect_path = $redirect_path_hooks;
+  }
+  $redirect_path = drupal_valid_path($redirect_path) ? $redirect_path : '<front>';
+  return $redirect_path;
+}
+
+function spoauthconsumer_get_redirect_path_from_hooks() {
+  $redirect_path_hook_values = module_invoke_all('spoauthconsumer_set_redirect_path');
+  if (!empty($redirect_path_hook_values)) {
+    return array_pop($redirect_path_hook_values);
+  }
+  return FALSE;
 }

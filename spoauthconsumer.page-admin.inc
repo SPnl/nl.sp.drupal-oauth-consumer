@@ -100,10 +100,15 @@ function spoauthconsumer_admin_settings_form($form, &$form_state) {
     '#type' => 'textfield',
     '#title' => 'Redirect pad',
     '#description' => t('Vul het pad in waar de gebruiker na het inloggen heen gestuurd moet worden. Vul %front in voor de voorpagina.', array('%front' => '<front>')),
-    '#default_value' => variable_get('spoauthconsumer_redirect_path', ''),
+    '#default_value' => spoauthconsumer_get_redirect_path(),
     '#size' => 60,
     '#max_length' => 60,
   );
+
+  if (spoauthconsumer_get_redirect_path_from_hooks()) {
+    $form['spoauthconsumer_redirect_path']['#disabled'] = TRUE;
+    $form['spoauthconsumer_redirect_path']['#description'] = 'Het redirect pad is ingesteld door een andere module, en is niet aan te passen.';
+  }
 
   $form['actions'] = array(
     '#type' => 'actions',
