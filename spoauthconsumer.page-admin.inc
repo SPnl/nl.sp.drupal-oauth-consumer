@@ -168,22 +168,25 @@ function spoauthconsumer_admin_settings_form_submit($form, &$form_state) {
     }
 
     // Create the local role if it doesn't exist, or delete local id if it isn't synced anymore
-    if(($srole['allow_login'] || $srole['sync']) && !isset($srole['local_id'])) {
+    if($srole['allow_login'] || $srole['sync']) {
+      if (!isset($srole['local_id'])) {
+        $existing = user_role_load_by_name($srole['name']);
+        if($existing) {
+          $srole['local_id'] = $existing->rid;
+        } else {
 
-      $existing = user_role_load_by_name($srole['name']);
-      if($existing) {
-        $srole['local_id'] = $existing->rid;
-      } else {
+          $local_role       = new \StdClass;
+          $local_role->name = $srole['name'];
+          user_role_save($local_role);
 
-        $local_role       = new \StdClass;
-        $local_role->name = $srole['name'];
-        user_role_save($local_role);
-
-        $srole['local_id'] = $local_role->rid;
+          $srole['local_id'] = $local_role->rid;
+        }
       }
-
-    } elseif(isset($srole['local_id'])) {
-      unset($srole['local_id']);
+    }
+    if(!$srole['allow_login'] && !$srole['sync']) {
+      if (isset($srole['local_id'])) {
+        unset($srole['local_id']);
+      }
     }
   }
 
