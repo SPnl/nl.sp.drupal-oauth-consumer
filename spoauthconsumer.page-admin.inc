@@ -96,6 +96,15 @@ function spoauthconsumer_admin_settings_form($form, &$form_state) {
     '#max_length' => 60,
   );
 
+  $form['spoauthconsumer_logout_button_text'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Tekst uitlog knop',
+    '#description' => 'Pas de tekst op de uitlogknop naar wens aan.',
+    '#default_value' => variable_get('spoauthconsumer_logout_button_text', 'Uitloggen SPNET'),
+    '#size' => 60,
+    '#max_length' => 60,
+  );
+
   $form['spoauthconsumer_redirect_path'] = array(
     '#type' => 'textfield',
     '#title' => 'Redirect pad',
@@ -147,6 +156,7 @@ function spoauthconsumer_admin_settings_form_submit($form, &$form_state) {
   variable_set('spoauthconsumer_client_id', $form_state['values']['spoauthconsumer_client_id']);
   variable_set('spoauthconsumer_client_secret', $form_state['values']['spoauthconsumer_client_secret']);
   variable_set('spoauthconsumer_button_text', $form_state['values']['spoauthconsumer_button_text']);
+  variable_set('spoauthconsumer_logout_button_text', $form_state['values']['spoauthconsumer_logout_button_text']);
   variable_set('spoauthconsumer_redirect_path', $form_state['values']['spoauthconsumer_redirect_path']);
 
   // Update role storage

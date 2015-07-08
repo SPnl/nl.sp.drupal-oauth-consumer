@@ -69,12 +69,37 @@ function spoauthconsumer_block_view($delta) {
       else {  
         //$state = array('build_info' => array('args' => array()));
         return array(
-          'content' => '<form action="/user/logout" method="get"><input class="form-submit" type="submit" value="Uitloggen" name="Submit" id="edit-spoauthconsumer-logout" /></form>',
+          'content' => drupal_get_form('spoauthconsumer_logout_form'),
         );
       }
       break;
     }
   }
+}
+
+/**
+ * Formulier met uitlogknop
+ */
+function spoauthconsumer_logout_form($form, &$form_state) {
+  $button_text = variable_get('spoauthconsumer_logout_button_text', 'Uitloggen SPNET');
+  $form['spoauthconsumer_connect'] = array(
+    '#type'   => 'submit',
+    '#value'  => $button_text,
+    '#submit' => array('spoauthconsumer_logout_form_submit'),
+  );
+  return $form;
+}
+
+/**
+ * Logout form submit function
+ */
+function spoauthconsumer_logout_form_submit($form, &$form_state) {
+  global $user;
+  // Get authentication server url.
+  $server_url = variable_get('spoauthconsumer_server', 'https://spnettest.sp.nl');
+  module_invoke_all('user_logout', $user);
+  session_destroy();
+  drupal_goto($server_url. '/user/logout', array(), 307);
 }
 
 /**
