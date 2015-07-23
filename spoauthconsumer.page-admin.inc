@@ -114,6 +114,15 @@ function spoauthconsumer_admin_settings_form($form, &$form_state) {
     '#max_length' => 60,
   );
 
+  $form['spoauthconsumer_redirect_path_no_login'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Redirect pad niet ingelogde gebruikers',
+    '#description' => t('Vul het pad in waar de gebruiker die niet ingelogd kon worden heen gestuurd moet worden. Vul %front in voor de voorpagina.', array('%front' => '<front>')),
+    '#default_value' => variable_get('spoauthconsumer_redirect_path_no_login', '<front>'),
+    '#size' => 60,
+    '#max_length' => 60,
+  );
+
   if (spoauthconsumer_get_redirect_path_from_hooks()) {
     $form['spoauthconsumer_redirect_path']['#disabled'] = TRUE;
     $form['spoauthconsumer_redirect_path']['#description'] = 'Het redirect pad is ingesteld door een andere module, en is niet aan te passen.';
@@ -132,10 +141,13 @@ function spoauthconsumer_admin_settings_form($form, &$form_state) {
 }
 
 function spoauthconsumer_admin_settings_form_validate($form, &$form_state) {
-  $redirect_path = $form_state['values']['spoauthconsumer_redirect_path'];
-  if (!empty($redirect_path)) {
-    if (!drupal_valid_path($redirect_path)) {
-      form_set_error('spoauthconsumer_redirect_path', 'Vul een geldig pad in');
+  $paths = array('spoauthconsumer_redirect_path', 'spoauthconsumer_redirect_path_no_login');
+  foreach ($paths as $path) {
+    $redirect_path = $form_state['values'][$path];
+    if (!empty($redirect_path)) {
+      if (!drupal_valid_path($redirect_path)) {
+        form_set_error($path, 'Vul een geldig pad in');
+      }
     }
   }
 }
@@ -158,6 +170,7 @@ function spoauthconsumer_admin_settings_form_submit($form, &$form_state) {
   variable_set('spoauthconsumer_button_text', $form_state['values']['spoauthconsumer_button_text']);
   variable_set('spoauthconsumer_logout_button_text', $form_state['values']['spoauthconsumer_logout_button_text']);
   variable_set('spoauthconsumer_redirect_path', $form_state['values']['spoauthconsumer_redirect_path']);
+  variable_set('spoauthconsumer_redirect_path_no_login', $form_state['values']['spoauthconsumer_redirect_path_no_login']);
 
   // Update role storage
   $roleStorage = variable_get('spoauthconsumer_roles_storage', array());

@@ -264,7 +264,7 @@ function spoauthconsumer_process_user($data) {
 
   if (!$hasAccess) {
     drupal_set_message('U hebt geen toegang tot deze website. Neem voor vragen contact op met webmaster@sp.nl.', 'error');
-    return drupal_goto('<front>');
+    return drupal_goto(variable_get('spoauthconsumer_redirect_path_no_login', '<front>'));
   }
 
   try {
