@@ -143,7 +143,7 @@ function spoauthconsumer_admin_settings_form($form, &$form_state) {
 function spoauthconsumer_admin_settings_form_validate($form, &$form_state) {
   $paths = array('spoauthconsumer_redirect_path', 'spoauthconsumer_redirect_path_no_login');
   foreach ($paths as $path) {
-    $redirect_path = $form_state['values'][$path];
+    $redirect_path = drupal_get_normal_path($form_state['values'][$path]);
     if (!empty($redirect_path)) {
       if (!drupal_valid_path($redirect_path)) {
         form_set_error($path, 'Vul een geldig pad in');
