@@ -257,7 +257,7 @@ function spoauthconsumer_process_user($data) {
   $hasAccess = false;
   $roles_storage = variable_get('spoauthconsumer_roles_storage');
   foreach($roles_storage as $role) {
-    if($role['allow_login'] && array_key_exists($role['id'], $remote_roles)) {
+    if(!empty($role['allow_login']) && array_key_exists($role['id'], $remote_roles)) {
       $hasAccess = true;
     }
   }
@@ -331,7 +331,7 @@ function spoauthconsumer_process_user($data) {
     // Update roles
     foreach($roles_storage as $srole) {
 
-      if($srole['sync'] == true && isset($srole['local_id'])) {
+      if(!empty($srole['sync']) && isset($srole['local_id'])) {
         if(isset($remote_roles[$srole['id']])) {
           if(!array_key_exists($srole['local_id'], $account->roles)) {
             $new_role[$srole['local_id']] = $srole['name'];
