@@ -4,3 +4,4 @@ core = 7.x
 version = 1.0
 package = sprbs
 dependencies[] = sprbs
+dependencies[] = number
