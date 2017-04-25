@@ -319,15 +319,17 @@ function spoauthconsumer_process_user($data) {
     // Update address info
     $wrapped = entity_metadata_wrapper('user', $account);
 
-    if(property_exists($data, 'field_email_primary'))
+    if(property_exists($data, 'field_email_primary') && !empty((string)$data->field_email_primary)) {
       $wrapped->mail = (string)$data->field_email_primary;
+    }
 
     $addressFields = array('field_contact_id', 'field_first_name', 'field_middle_name', 'field_last_name', 'field_initials', 'field_phone_primary', 'field_email_primary', 'field_afdeling');
     foreach($addressFields as $addressField) {
-      if(property_exists($data, $addressField))
+      if(property_exists($data, $addressField) && !empty((string)$data->$addressField)) {
         $wrapped->$addressField = (string)$data->$addressField;
+      }
     }
-
+    
     // Update roles
     foreach($roles_storage as $srole) {
 
