@@ -66,7 +66,7 @@ function spoauthconsumer_block_view($delta) {
           'content' => drupal_get_form('spoauthconsumer_button_form'),
         );
       }
-      else {  
+      else {
         //$state = array('build_info' => array('args' => array()));
         return array(
           'content' => drupal_get_form('spoauthconsumer_logout_form'),
@@ -130,6 +130,10 @@ function spoauthconsumer_enable() {
   _spoauthconsumer_create_field('field_phone_primary', 'Telefoon');
   _spoauthconsumer_create_field('field_email_primary', 'E-mailadres');
   _spoauthconsumer_create_field('field_afdeling', 'Afdeling');
+  // Optional fields, for shop.sp.nl.
+  //_spoauthconsumer_create_field('field_street_address', 'Adres');
+  //_spoauthconsumer_create_field('field_postal_code', 'Postcode');
+  //_spoauthconsumer_create_field('field_city', 'Woonplaats');
 }
 
 /**
@@ -323,10 +327,12 @@ function spoauthconsumer_process_user($data) {
       $wrapped->mail = (string)$data->field_email_primary;
     }
 
-    $addressFields = array('field_contact_id', 'field_first_name', 'field_middle_name', 'field_last_name', 'field_initials', 'field_phone_primary', 'field_email_primary', 'field_afdeling');
+    $addressFields = array('field_contact_id', 'field_first_name', 'field_middle_name', 'field_last_name', 'field_initials', 'field_phone_primary', 'field_email_primary', 'field_afdeling', 'field_street_address', 'field_postal_code', 'field_city');
     foreach($addressFields as $addressField) {
-      if(property_exists($data, $addressField) && !empty((string)$data->$addressField)) {
-        $wrapped->$addressField = (string)$data->$addressField;
+      if(property_exists($data, $addressField)) {
+        if (isset($wrapped->$addressField)) {
+          $wrapped->$addressField = (string)$data->$addressField;
+        }
       }
     }
     
