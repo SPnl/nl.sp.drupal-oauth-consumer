@@ -176,7 +176,7 @@ function _spoauthconsumer_load_oauth2() {
     'authorisationEndpoint' => variable_get('spoauthconsumer_server') . '/oauth2/authorize',
     'tokenEndpoint'         => variable_get('spoauthconsumer_server') . '/oauth2/token',
     'apiEndpoint'           => variable_get('spoauthconsumer_server') . '/oauth2/api',
-    'redirectUri'           => 'https://' . $_SERVER['SERVER_NAME'] . base_path() . 'oauth2/callback',
+    'redirectUri'           => 'https://' . $_SERVER['HTTP_HOST'] . base_path() . 'oauth2/callback',
   );
 }
 
