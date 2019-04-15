@@ -27,16 +27,34 @@ function spoauthconsumer_menu() {
     'page callback'    => 'drupal_get_form',
     'page arguments'   => array('spoauthconsumer_admin_settings_form'),
     'file'             => 'spoauthconsumer.page-admin.inc',
-    'access callback' => 'sprbs_access_check',
+    'access callback' => 'spoauthconsumer_access_check',
   );
 
   $items['admin/config/sp/oauthconsumer/settings'] = array(
     'title'            => 'Instellingen',
     'type'             => MENU_DEFAULT_LOCAL_TASK,
     'weight'           => 0,
-    'access callback' => 'sprbs_access_check',
+    'access callback' => 'spoauthconsumer_access_check',
   );
   return $items;
+}
+
+/**
+ * @return bool Has SPRBS configuration access
+ */
+function spoauthconsumer_access_check() {
+  return (user_access('administer site configuration') || user_access('administer sp webformsync'));
+}
+
+/**
+ * Definces permission to administer webformsync.
+ */
+function spoauthconsumer_permission() {
+  return array(
+    'administer sp oauthconsumer' => array(
+      'title' => 'Beheer SP oauthconsumer',
+    ),
+  );
 }
 
 /**
@@ -335,7 +353,7 @@ function spoauthconsumer_process_user($data) {
         }
       }
     }
-    
+
     // Update roles
     foreach($roles_storage as $srole) {
 
