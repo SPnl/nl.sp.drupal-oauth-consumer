@@ -202,6 +202,7 @@ function _spoauthconsumer_load_oauth2() {
  * Bij een klik op de 'Inloggen met...'-knop gaan we oauthen
  */
 function spoauthconsumer_initialize() {
+  global $base_url;
 
   $oauth2 = _spoauthconsumer_load_oauth2();
 
@@ -214,6 +215,8 @@ function spoauthconsumer_initialize() {
     'scope' => 'sp',
     'state' => 'login',
   ));
+  $domain = parse_url($base_url, PHP_URL_HOST);
+  $auth_url .= '&auth_domain=' . urlencode($domain);
   return drupal_goto($auth_url);
 }
 
